@@ -7,9 +7,11 @@
  */
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StudentPost;
 use App\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class StudentController extends Controller
 {
@@ -175,13 +177,17 @@ class StudentController extends Controller
     }
 
     /**
-     * 布局测试
+     * 列表页面
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      * user: trina
      */
     public function index()
     {
-        return view('student.index');
+        $students = Student::orderBy('id', 'desc')->paginate(5);
+
+        return view('student.index', [
+            'students' => $students,
+        ]);
     }
 
     /**
@@ -289,5 +295,124 @@ class StudentController extends Controller
     public function haveInHand2()
     {
         return '活动进行中，谢谢你的参与2';
+    }
+
+    /**
+     * 创建
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * user: trina
+     */
+    public function create(Request $request)
+    {
+        $student = new Student();
+
+        if ($request->isMethod('post')) {
+            //控制器验证
+            //$this->validate($request, Student::rules(), Student::messages(), Student::attributes());
+
+            //验证器验证
+            //自动重定向validate(),错误抛出input框中输入的值不清空withInput()
+            Validator::make($request->all(), Student::rules($request), Student::messages(), Student::attributes())->validate();
+
+            //手动冲定向，fails()是否有验证错误，withErrors($validator)把错误消息闪存到 Session
+            /*$validator = Validator::make($request->all(), Student::rules(), Student::messages(), Student::attributes());
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }*/
+
+            //批量保存
+            if (!Student::create($request->input())) {
+                return redirect('student/index')->with('error', '添加失败。');
+            }
+
+            return redirect('student/index')->with('success', '添加成功。');
+        }
+
+        return view('student.create', [
+            'student' => $student,
+        ]);
+    }
+
+    /**
+     * 保存
+     * @param StudentPost $request
+     * @return \Illuminate\Http\RedirectResponse
+     * user: trina
+     */
+    public function save(StudentPost $request)
+    {
+        $student = new Student();
+        $student->name = $request->input('name');
+        $student->age = $request->input('age');
+        $student->sex = $request->input('sex');
+
+        if (!$student->save()) {
+            return redirect('student/index')->with('error', '添加失败。');
+        }
+
+        return redirect('student/index')->with('success', '添加成功。');
+    }
+
+    /**
+     * 编辑
+     * @param Request $request
+     * @param $id
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     * user: trina
+     */
+    public function update(Request $request, $id)
+    {
+        $student = Student::findOrFail($id);
+        if ($request->isMethod('post')) {
+            //验证
+            Validator::make($request->all(), Student::rules($request), Student::messages(), Student::attributes())->validate();
+
+            $student->name = $request->input('name');
+            $student->age = $request->input('age');
+            $student->sex = $request->input('sex');
+
+            if (!$student->save()) {
+                return redirect('student/index')->with('error', '编辑失败。');
+            }
+
+            return redirect('student/index')->with('success', '编辑成功。');
+        }
+
+        return view('student.update', [
+            'student' => $student
+        ]);
+    }
+
+    /**
+     * 详情页面
+     * @param $id
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * user: trina
+     */
+    public function detail($id)
+    {
+        $student = Student::findOrFail($id);
+
+        return view('student.detail', [
+            'student' => $student
+        ]);
+    }
+
+    /**
+     * 删除
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse
+     * user: trina
+     */
+    public function delete($id)
+    {
+        $student = Student::findOrFail($id);
+
+        if (!$student->delete()) {
+            return redirect('student/index')->with('error', '删除失败。');
+        }
+
+        return redirect('student/index')->with('success', '删除成功。');
     }
 }

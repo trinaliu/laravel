@@ -96,6 +96,11 @@ Route::prefix('student')->group(function() {
     Route::middleware('web')->group(function() {
         Route::get('view/{id}', 'StudentController@view');
         Route::get('session', 'StudentController@session');
+        Route::any('create', 'StudentController@create');
+        Route::post('save', 'StudentController@save');
+        Route::any('update/{id}', 'StudentController@update');
+        Route::get('detail/{id}', 'StudentController@detail');
+        Route::get('delete/{id}', 'StudentController@delete');
     });
     Route::any('response', 'StudentController@response');
     Route::get('activity', 'StudentController@activity');
@@ -104,3 +109,7 @@ Route::prefix('student')->group(function() {
         Route::get('have-in-hand2', 'StudentController@haveInHand2');
     });
 });
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
